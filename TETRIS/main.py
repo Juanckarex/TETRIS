@@ -4,10 +4,10 @@ from random import choice, randrange
 from shapes import figures
 
 # Constants
-W, H = 10, 20
-TILE = 45
+W, H = 10, 18
+TILE = 44
 GAME_RES = W * TILE, H * TILE
-RES = 750, 940
+RES = 740, 940
 FPS = 60
 
 class Figure:
@@ -16,14 +16,22 @@ class Figure:
         self.reset()
 
     def reset(self):
-        self.blocks = deepcopy(choice(self.figures))
-        self.color = self.generate_color()
-        self.next_blocks = deepcopy(choice(self.figures))
-        self.next_color = self.generate_color()
+        self.blocks = deepcopy(choice(self.figures))  # Figura actual
+        self.color = self.choose_color()              # Color de la figura actual
+        self.next_blocks = deepcopy(choice(self.figures))  # Próxima figura
+        self.next_color = self.choose_color()         # Color de la próxima figura
 
     @staticmethod
-    def generate_color():
-        return randrange(30, 256), randrange(30, 256), randrange(30, 256)
+    def choose_color():
+        
+        colors = [
+            (255, 0, 0),    # Rojo
+            (0, 255, 0),    # Verde
+            (255, 255, 0),  # Amarillo
+            (255, 165, 0),  # Naranja
+            (128, 0, 128)   # Morado
+        ]
+        return choice(colors)  # Selección aleatoria de uno de los colores
 
     def rotate(self):
         center = self.blocks[0]
@@ -144,6 +152,7 @@ class Game:
                 if not self.board.is_valid_position(self.figure.blocks):
                     self.figure.update_position(0, -1)
                     self.board.place_figure(self.figure.blocks, self.figure.color)
+                    
                     self.figure.reset()
                     lines_cleared = self.board.clear_lines()
                     self.score += {0: 0, 1: 100, 2: 300, 3: 700, 4: 1500}[lines_cleared]
