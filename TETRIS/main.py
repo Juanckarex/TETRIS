@@ -13,13 +13,23 @@ FPS = 60
 class Figure:
     def __init__(self, figures):
         self.figures = figures
+        self.next_blocks = deepcopy(choice(self.figures))
+        self.next_color = self.choose_color()
         self.reset()
 
     def reset(self):
-        self.blocks = deepcopy(choice(self.figures))  # Figura actual
-        self.color = self.choose_color()              # Color de la figura actual
-        self.next_blocks = deepcopy(choice(self.figures))  # Próxima figura
-        self.next_color = self.choose_color()         # Color de la próxima figura
+        #self.blocks = deepcopy(choice(self.figures))  # Figura actual
+        #self.color = self.choose_color()              # Color de la figura actual
+        #self.next_blocks = deepcopy(choice(self.figures))  # Próxima figura
+        #self.next_color = self.choose_color()         # Color de la próxima figura
+        self.blocks = deepcopy(self.next_blocks)
+        self.color = self.next_color
+
+
+    def update_next_figure(self):
+    #Genera una nueva figura siguiente
+        self.next_blocks = deepcopy(choice(self.figures))
+        self.next_color = self.choose_color()
 
     @staticmethod
     def choose_color():
@@ -152,11 +162,17 @@ class Game:
                 if not self.board.is_valid_position(self.figure.blocks):
                     self.figure.update_position(0, -1)
                     self.board.place_figure(self.figure.blocks, self.figure.color)
-                    
+
+                    # La figura actual toma la figura siguiente
                     self.figure.reset()
+
+                    # Ahora generamos la nueva figura siguiente
+                    self.figure.update_next_figure()
+
                     lines_cleared = self.board.clear_lines()
                     self.score += {0: 0, 1: 100, 2: 300, 3: 700, 4: 1500}[lines_cleared]
                     self.anim_limit = 2000
+
 
             # Draw grid
             [pygame.draw.rect(self.game_screen, (40, 40, 40), rect, 1) for rect in self.board.grid]
