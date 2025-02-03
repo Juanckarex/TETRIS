@@ -74,15 +74,19 @@ class Board:
             self.field[block.y][block.x] = color
 
     def clear_lines(self):
-        lines_cleared = 0
-        for row in range(H - 1, -1, -1):
-            if all(self.field[row]):
-                lines_cleared += 1
-                for y in range(row, 0, -1):
-                    self.field[y] = self.field[y - 1][:]
-                self.field[0] = [0 for _ in range(W)]
-        return lines_cleared
+        lines_cleared = 0  # Contador de líneas eliminadas
+        new_field = [[0 for _ in range(W)] for _ in range(H)]  # Crear un nuevo tablero vacío
+        new_row = H - 1  # Índice de la nueva fila donde copiamos los datos
 
+        for row in range(H - 1, -1, -1):  # Recorrer el tablero de abajo hacia arriba
+            if not all(self.field[row]):  # Si la fila NO está llena, la copiamos
+                new_field[new_row] = self.field[row]
+                new_row -= 1
+            else:
+                lines_cleared += 1  # Contamos la fila eliminada
+
+        self.field = new_field  # Actualizamos el tablero con el nuevo
+        return lines_cleared
 class Game:
     def __init__(self):
         pygame.init()
@@ -163,9 +167,12 @@ class Game:
                     self.figure.update_position(0, -1)
                     self.board.place_figure(self.figure.blocks, self.figure.color)
 
+                    lines_cleared = self.board.clear_lines()
+                    self.score += {0: 0, 1: 100, 2: 300, 3: 700, 4: 1500}[lines_cleared]
+                    
+
                     # La figura actual toma la figura siguiente
                     self.figure.reset()
-
                     # Ahora generamos la nueva figura siguiente
                     self.figure.update_next_figure()
 
