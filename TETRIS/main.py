@@ -32,10 +32,10 @@ class Figure:
     def choose_color():
         colors = [
             (255, 0, 0),  # Rojo
-            (0, 255, 0),  # Verde
-            (255, 255, 0),  # Amarillo
-            (255, 165, 0),  # Naranja
-            (128, 0, 128),  # Morado
+            (255, 128, 0),     # Naranja neón
+            (255, 0, 255),     # Magenta neón (similar al morado pero más brillante)
+            (0, 255, 255),     # Cian neón
+            (128, 0, 255),    # Morado neón
         ]
         return choice(colors)
 
@@ -145,66 +145,52 @@ class Board:
     def clear_matches(self):
         matches = self.find_matches()
         if not matches:
-            return 0
+            return 0  # Si no hay coincidencias, no hacemos nada
 
         score = 0
+        affected_columns = set()  # Guardaremos qué columnas tienen bloques eliminados
+        #  Primero, registramos los bloques que serán eliminados
+
+
         for match in matches:
-            if len(match) == 3:
-                # Eliminar 3 en línea
-                for y, x in match:
-                    self.field[y][x] = 0
-                score += 100
-            elif len(match) == 4:
-                # Eliminar fila o columna completa
-                if match[0][0] == match[1][0]:  # Misma fila
-                    y = match[0][0]
-                    for x in range(W):
-                        self.field[y][x] = 0
-                else:  # Misma columna
-                    x = match[0][1]
-                    for y in range(H):
-                        self.field[y][x] = 0
-                score += 300
-            elif len(match) == 5:
-                # Eliminar todas las cajas del mismo color
-                color = self.field[match[0][0]][match[0][1]]
-                for y in range(H):
-                    for x in range(W):
-                        if self.field[y][x] == color:
-                            self.field[y][x] = 0
-                score += 500
-            elif len(match) >= 6:
-                # Eliminar todo el tablero
-                for y in range(H):
-                    for x in range(W):
-                        self.field[y][x] = 0
-                score += 1000
+            for y, x in match:
+                self.field[y][x] = 0  
+                affected_columns.add(x)  
+
+        # Asignar puntaje según la cantidad de bloques eliminados
+        if len(match) == 3:
+            score += 100
+        elif len(match) == 4:
+            score += 300
+        elif len(match) == 5:
+            score += 500
+        elif len(match) >= 6:
+            score += 1000
+
+        # Expandimos `affected_columns` para incluir piezas flotantes
+        for x in range(W):
+            for y in range(H - 1):
+                if self.field[y][x] == 0 and self.field[y + 1][x] != 0:
+                    affected_columns.add(x)  
+
+        self.apply_gravity(affected_columns)
+
 
         return score
 
-    def apply_gravity(self):
-        moved = False  # Variable para saber si hubo movimiento
-
-        for x in range(W):
-            # Recorre cada columna de abajo hacia arriba
-            for y in range(H - 1, -1, -1):
-                if self.field[y][x] == 0:
-                    # Busca la caja más cercana arriba para hacerla caer
-                    for y_above in range(y - 1, -1, -1):
-                        if self.field[y_above][x] != 0:
-                            self.field[y][x] = self.field[y_above][x]
-                            self.field[y_above][x] = 0
-                            moved = True  # Hubo movimiento
-                            break
-
-        # Si hubo movimiento, verifica nuevas líneas o coincidencias
-        if moved:
-            lines_cleared = self.clear_lines()
-            matches_score = self.clear_matches()
-            return lines_cleared, matches_score  # Retornamos para actualizar puntaje
-
-        return 0, 0  # No hubo cambios
-
+    def apply_gravity(self, affected_columns):
+        moved = True
+        while moved:  # Se ejecutará hasta que todo esté en su lugar
+            moved = False  
+            for x in affected_columns:  
+                for y in range(H - 1, -1, -1):  
+                    if self.field[y][x] == 0:  
+                        for y_above in range(y - 1, -1, -1):  
+                            if self.field[y_above][x] != 0:
+                                self.field[y][x] = self.field[y_above][x]  
+                                self.field[y_above][x] = 0  
+                                moved = True  #  Indicamos que hubo movimiento
+                                break  
 
 class Game:
     def __init__(self):
@@ -290,7 +276,7 @@ class Game:
                     self.board.place_figure(self.figure) 
 
                     self.score += self.board.clear_matches()
-                    self.board.apply_gravity()
+                    #self.board.apply_gravity()
 
                     #lines_cleared, matches_score = self.board.apply_gravity()
                     #self.score += {0: 0, 1: 100, 2: 300, 3: 700, 4: 1500}[lines_cleared]
